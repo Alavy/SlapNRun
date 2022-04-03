@@ -1,21 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    private float moveMentSpeedZ = 6f;
+    private float normalSpeedZ = 6f;
     [SerializeField]
-    private float moveMentSpeedX = 6f;
+    private float normalSpeedX = 4f;
     [SerializeField]
-    private float rotateSpeed = 30f;
+    private float ninjaSpeedZ = 10f;
+    [SerializeField]
+    private float ninjaSpeedX = 8f;
+    [SerializeField]
+    private float incrementPerSlap = 0.1f;
+    [SerializeField]
+    private float decreaseSlapAfter = 0.05f;
+    [SerializeField]
+    private float stayInNinjaBy = 3f;
     [SerializeField]
     private float xLimitPos = 4.8f;
-    private Rigidbody m_rigidbody;
-    private CapsuleCollider m_CapsuleCollider;
-    private Animator m_animator;
+    [SerializeField]
+    private float maxSpeedZ = 20f;
+    [SerializeField]
+    private float maxSpeedX = 20f;
+
+    [SerializeField]
+    private Image slapIndicator;
+
+    private float m_playerSpeedZ = 0;
+    private float m_playerSpeedX = 0;
+    private float m_fillAmount = 0;
+
     private bool m_isPlayerDeath = false;
+    private bool m_isPlayerOnFirstRun = false;
+
+    private Rigidbody m_rigidbody;
+    private CapsuleCollider m_baseCollider;
+
+
+    private Animator m_animator;
 
     private Vector2 m_dir = new Vector2(0,0);
 
@@ -25,7 +50,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         m_rigidbody = GetComponent<Rigidbody>();
-        m_CapsuleCollider = GetComponent<CapsuleCollider>();
+        m_baseCollider = GetComponent<CapsuleCollider>();
         m_animator = GetComponent<Animator>();
 
         InputManager.OnSwipe += onSwipe;
@@ -36,14 +61,42 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < m_childColliders.Length; i++)
         {
             m_childColliders[i].enabled = false;
+            
         }
         for (int i = 0; i < m_childBodies.Length; i++)
         {
             m_childBodies[i].isKinematic = true;
         }
         m_rigidbody.isKinematic = false;
-        m_CapsuleCollider.enabled = true;
-        m_animator.Play("Run");
+        m_baseCollider.enabled = true;
+        m_playerSpeedX = normalSpeedX;
+        m_playerSpeedZ = normalSpeedZ;
+
+        StartCoroutine(decreaseSlapMeter(0.1f));
+    }
+    private void setSlapIndicator()
+    {
+        m_fillAmount = Mathf.Clamp01(m_fillAmount + incrementPerSlap);
+        slapIndicator.fillAmount = m_fillAmount;
+
+        if (m_fillAmount == 1.0f)
+        {
+            StartCoroutine(fastRunTil(stayInNinjaBy));
+            gameObject.LeanValue(m_fillAmount, 0
+                ,stayInNinjaBy).setOnUpdate((float val) => {
+                    m_fillAmount = val;
+                    slapIndicator.fillAmount = val;
+                });
+        }
+    }
+    IEnumerator decreaseSlapMeter(float scnds)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(scnds);
+            m_fillAmount = Mathf.Clamp01(m_fillAmount - 0.01f);
+            slapIndicator.fillAmount = m_fillAmount;
+        }
     }
     private void OnTriggerEnter(Collider other)
     {
@@ -52,22 +105,32 @@ public class PlayerController : MonoBehaviour
 
         if (other.CompareTag("Npc"))
         {
-            Vector3 slapDir = other.transform.position - transform.position;
+            setSlapIndicator();
+
+            Vector3 slapDir = (other.transform.position - transform.position).normalized;
            float angle= 
                 Vector3.SignedAngle(Vector3.forward,
                 slapDir, Vector3.up);
+
+
             if (angle > 0f)
             {
                 m_animator.Play("RightSlap");
             }
-            if (angle < 0f)
+            else if (angle < 0f)
+            {
+                m_animator.Play("LeftSlap");
+
+            }
+            else
             {
                 m_animator.Play("LeftSlap");
 
             }
             other.GetComponent<NpcPhysics>()?.Fall(slapDir);
 
-        }else if (other.CompareTag("Cutter"))
+        }
+        else if (other.CompareTag("Cutter"))
         {
             
 
@@ -84,8 +147,25 @@ public class PlayerController : MonoBehaviour
             m_animator.enabled = false;
 
             m_rigidbody.isKinematic = true;
-            m_CapsuleCollider.enabled = false;
+            m_baseCollider.enabled = false;
         }
+        else if (other.CompareTag("Boster"))
+        {
+            StartCoroutine(fastRunTil(stayInNinjaBy));
+        }
+    }
+    IEnumerator fastRunTil(float scnds)
+    {
+        m_animator.SetBool("FastRun", true);
+        m_playerSpeedX = ninjaSpeedX;
+        m_playerSpeedZ = ninjaSpeedZ;
+        m_isPlayerOnFirstRun = true;
+        yield return new WaitForSeconds(scnds);
+        m_animator.SetBool("FastRun", false);
+        m_playerSpeedX = normalSpeedX;
+        m_playerSpeedZ = normalSpeedZ;
+        m_isPlayerOnFirstRun = false;
+
     }
     private void OnDestroy()
     {
@@ -105,16 +185,10 @@ public class PlayerController : MonoBehaviour
         if (m_isPlayerDeath)
             return;
 
-        m_rigidbody.velocity = new Vector3(m_dir.x * moveMentSpeedX, 0 , moveMentSpeedZ);
+        m_rigidbody.velocity = new Vector3(m_dir.x * m_playerSpeedX, 0 , m_playerSpeedZ);
         m_rigidbody.rotation = Quaternion.FromToRotation(Vector3.forward, m_rigidbody.velocity);
-        //m_rigidbody.rotation = Quaternion.Slerp(m_rigidbody.rotation, 
-            //Quaternion.FromToRotation(Vector3.forward,m_rigidbody.velocity.normalized
-            //), Time.deltaTime * rotateSpeed);
+
         m_rigidbody.position = new Vector3(Mathf.Clamp(m_rigidbody.position.x, -xLimitPos, xLimitPos)
             , m_rigidbody.position.y, m_rigidbody.position.z);
-
-        //m_rigidbody.rotation = Quaternion.Euler(0, Mathf.Clamp(
-        //m_rigidbody.rotation.eulerAngles.y,-45,45), 0);
-        //Debug.Log(m_rigidbody.rotation.eulerAngles.y);
     }
 }

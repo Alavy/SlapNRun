@@ -1112,7 +1112,7 @@ GameObject:
   - component: {fileID: 4659465551957021526}
   m_Layer: 0
   m_Name: head
-  m_TagString: Untagged
+  m_TagString: Head
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2018,9 +2018,9 @@ GameObject:
   - component: {fileID: 9222502506007879807}
   - component: {fileID: 8410254076961340089}
   - component: {fileID: 8410254076961340102}
-  - component: {fileID: 8410254076961340103}
   - component: {fileID: 8410254076961340100}
   - component: {fileID: 8410254076961340088}
+  - component: {fileID: 7667989682365631814}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2075,23 +2075,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db323a6c84f41b549ad39dc852f481b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveMentSpeedZ: 4
-  moveMentSpeedX: 8
-  rotateSpeed: 30
---- !u!136 &8410254076961340103
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8410254076961340101}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.2874483
-  m_Height: 1.8193258
-  m_Direction: 1
-  m_Center: {x: -0.082923114, y: 0.8898261, z: 0.062547624}
+  normalSpeedZ: 6
+  normalSpeedX: 4
+  ninjaSpeedZ: 10
+  ninjaSpeedX: 8
+  speedIncrementPerSlap: 0.5
+  stayInNinjaBy: 3
+  xLimitPos: 4.8
 --- !u!54 &8410254076961340100
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2106,7 +2096,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 80
+  m_Constraints: 84
   m_CollisionDetection: 0
 --- !u!65 &8410254076961340088
 BoxCollider:
@@ -2119,5 +2109,19 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.1698861, y: 1.2663729, z: 1.1481729}
-  m_Center: {x: -0.03729689, y: 1.1398374, z: 0.4350587}
+  m_Size: {x: 0.9829152, y: 1.8279651, z: 0.76136506}
+  m_Center: {x: -0.08299968, y: 0.8590413, z: 0.1591062}
+--- !u!136 &7667989682365631814
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8410254076961340101}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.314151
+  m_Height: 1.8417356
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.8819734, z: 0.08080393}
